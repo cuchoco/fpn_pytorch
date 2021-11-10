@@ -208,7 +208,7 @@ class _FPN(nn.Module):
                 idx_l = (roi_level == l).nonzero().squeeze()
                 box_to_levels.append(idx_l)
                 scale = feat_maps[i].size(2) / im_info[0][0]
-                feat = self.RCNN_roi_align(feat_maps[i], rois[idx_l], scale)
+                feat = self.RCNN_roi_align(feat_maps[i], rois[idx_l])
                 roi_pool_feats.append(feat)
             roi_pool_feat = torch.cat(roi_pool_feats, 0)
             box_to_level = torch.cat(box_to_levels, 0)
@@ -224,7 +224,7 @@ class _FPN(nn.Module):
                 idx_l = (roi_level == l).nonzero().squeeze()
                 box_to_levels.append(idx_l)
                 scale = feat_maps[i].size(2) / im_info[0][0]
-                feat = self.RCNN_roi_pool(feat_maps[i], rois[idx_l], scale)
+                feat = self.RCNN_roi_pool(feat_maps[i], rois[idx_l])
                 roi_pool_feats.append(feat)
             roi_pool_feat = torch.cat(roi_pool_feats, 0)
             box_to_level = torch.cat(box_to_levels, 0)
