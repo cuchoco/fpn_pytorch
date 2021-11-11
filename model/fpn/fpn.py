@@ -134,7 +134,7 @@ class FPN(nn.Module):
 
 
 
-class _FPN(nn.Module):
+class FPN_resnet(nn.Module):
     """ FPN """
     def __init__(self, classes, class_agnostic = False):
         super().__init__()
@@ -147,17 +147,41 @@ class _FPN(nn.Module):
 
         self.maxpool2d = nn.MaxPool2d(1, stride=2)
         # define rpn
-        self.RCNN_rpn = _RPN_FPN(self.dout_base_model)
+        self.RCNN_rpn = _RPN_FPN(256)
         self.RCNN_proposal_target = _ProposalTargetLayer(self.n_classes)
 
         # NOTE: the original paper used pool_size = 7 for cls branch, and 14 for mask branch, to save the
         # computation time, we first use 14 as the pool_size, and then do stride=2 pooling for cls branch.
         self.RCNN_roi_pool = _RoIPooling(7,  1.0/16.0)
-        self.RCNN_roi_align = RoIAlignAvg(7,  1.0/16.0)
+        self.RCNN_roi_align = RoIAlignAvg(7,  1.0/16.0, -1)
         self.grid_size = 7 * 2 if True else 7
-        self.RCNN_roi_crop = _RoICrop()
+        # self.RCNN_roi_crop = _RoICrop()
         
         self.resnet = resnet101()
+        
+        
+        self.RCNN_top = nn.Sequential(
+            nn.Conv2d(256, 1024, kernel_size=7, stride=7, padding=0),
+            nn.ReLU(True),
+            nn.Conv2d(1024, 1024, kernel_size=1, stride=1, padding=0),
+            nn.ReLU(True)
+              )
+        
+        
+        
+        self.RCNN_cls_score = nn.Linear(1024, self.n_classes)
+        
+        if self.class_agnostic:
+            self.RCNN_bbox_pred = nn.Linear(1024, 4)
+        else:
+            self.RCNN_bbox_pred = nn.Linear(1024, 4 * self.n_classes)
+
+        # # Fix blocks
+        # for p in self.RCNN_layer0[0].parameters(): p.requires_grad=False
+        # for p in self.RCNN_layer0[1].parameters(): p.requires_grad=False
+
+        
+        
         
     def _get_fpn_features(self, x, model_path):
         resnet = self.resnet
@@ -245,7 +269,7 @@ class _FPN(nn.Module):
         gt_boxes = gt_boxes.data
         num_boxes = num_boxes.data
 
-        rpn_feature_maps, mrcnn_feature_maps = _get_fpn_features(im_info, '/home/kuchoco97/work/brain/data/backbone/model/epoch20_valloss0.33.pth')
+        rpn_feature_maps, mrcnn_feature_maps = self._get_fpn_features(im_data, '/home/kuchoco97/work/brain/data/backbone/model/epoch20_valloss0.33.pth')
         rois, rpn_loss_cls, rpn_loss_bbox = self.RCNN_rpn(rpn_feature_maps, im_info, gt_boxes, num_boxes)
 
         # if it is training phrase, then use ground trubut bboxes for refining
