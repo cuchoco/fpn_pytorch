@@ -3,8 +3,8 @@ import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-from anchor_target_layer_fpn import _AnchorTargetLayer_FPN
-from proposal_layer_fpn import _ProposalLayer_FPN
+from model.rpn.anchor_target_layer_fpn import _AnchorTargetLayer_FPN
+from model.rpn.proposal_layer_fpn import _ProposalLayer_FPN
 
 
 class _RPN_FPN(nn.Module):

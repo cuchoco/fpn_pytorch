@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from bbox_transform import bbox_overlaps_batch, bbox_transform_batch
+from model.rpn.bbox_transform import bbox_overlaps_batch, bbox_transform_batch
 
 class _ProposalTargetLayer(nn.Module):
     """
@@ -30,7 +30,7 @@ class _ProposalTargetLayer(nn.Module):
 
         num_images = 1
         # rois_per_image = int(cfg.TRAIN.BATCH_SIZE / num_images)
-        rois_per_image = int( 16 / num_images)   # batch_size = 16
+        rois_per_image = int( gt_boxes.size(0) / num_images)   # batch_size 
         fg_rois_per_image = int(np.round(0.25 * rois_per_image))
 
         labels, rois, gt_assign, bbox_targets, bbox_inside_weights = self._sample_rois_pytorch(

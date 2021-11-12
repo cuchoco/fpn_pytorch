@@ -193,6 +193,8 @@ class FPN_resnet(nn.Module):
         c1,c2,c3,c4,c5 = resnet.stages()
         
         fpn = FPN(c1,c2,c3,c4,c5)
+        fpn = fpn.cuda()
+        fpn.eval()
         p2, p3, p4, p5, p6 = fpn(x)
         
         rpn_feature_maps = [p2, p3, p4, p5, p6]
@@ -208,7 +210,7 @@ class FPN_resnet(nn.Module):
         img_area = im_info[0][0] * im_info[0][1]
         h = rois.data[:, 4] - rois.data[:, 2] + 1
         w = rois.data[:, 3] - rois.data[:, 1] + 1
-        roi_level = torch.log(torch.sqrt(h * w) / 224.0)
+        roi_level = torch.log(torch.sqrt(h * w) / 512)
         roi_level = torch.round(roi_level + 4)
         roi_level[roi_level < 2] = 2
         roi_level[roi_level > 5] = 5

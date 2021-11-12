@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from generate_anchors import generate_anchors, generate_anchors_all_pyramids
-from bbox_transform import bbox_transform_inv, clip_boxes
+from model.rpn.generate_anchors import generate_anchors, generate_anchors_all_pyramids
+from model.rpn.bbox_transform import bbox_transform_inv, clip_boxes
 from model.nms.nms import non_max_suppression as nms
 
 

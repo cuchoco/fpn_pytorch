@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from generate_anchors import generate_anchors_all_pyramids
-from bbox_transform import clip_boxes, bbox_overlaps_batch, bbox_transform_batch
+from model.rpn.generate_anchors import generate_anchors_all_pyramids
+from model.rpn.bbox_transform import clip_boxes, bbox_overlaps_batch, bbox_transform_batch
 
 
 
@@ -47,20 +47,22 @@ class _AnchorTargetLayer_FPN(nn.Module):
                 feat_shapes, self._fpn_feature_strides, self._fpn_anchor_stride)).type_as(scores)    
         total_anchors = anchors.size(0)
         
-        keep = ((anchors[:, 0] >= -self._allowed_border) &
-                (anchors[:, 1] >= -self._allowed_border) &
-                (anchors[:, 2] < (im_info[0][1]) + self._allowed_border) &
-                (anchors[:, 3] < (im_info[0][0]) + self._allowed_border))
+#         keep = ((anchors[:, 0] >= -self._allowed_border) &
+#                 (anchors[:, 1] >= -self._allowed_border) &
+#                 (anchors[:, 2] < (im_info[0][1]) + self._allowed_border) &
+#                 (anchors[:, 3] < (im_info[0][0]) + self._allowed_border))
 
-        inds_inside = torch.nonzero(keep).view(-1)
+#         inds_inside = torch.nonzero(keep).view(-1)
 
-        # keep only inside anchors
-        anchors = anchors[inds_inside, :]
+#         # keep only inside anchors
+#         anchors = anchors[inds_inside, :]
+
+        anchors.clip_(0, 512)
 
         # label: 1 is positive, 0 is negative, -1 is dont care
-        labels = gt_boxes.new(batch_size, inds_inside.size(0)).fill_(-1)
-        bbox_inside_weights = gt_boxes.new(batch_size, inds_inside.size(0)).zero_()
-        bbox_outside_weights = gt_boxes.new(batch_size, inds_inside.size(0)).zero_()
+        labels = gt_boxes.new(batch_size, anchors.size(0)).fill_(-1)
+        bbox_inside_weights = gt_boxes.new(batch_size, anchors.size(0)).zero_()
+        bbox_outside_weights = gt_boxes.new(batch_size, anchors.size(0)).zero_()
 
         overlaps = bbox_overlaps_batch(anchors, gt_boxes)
 
@@ -129,10 +131,10 @@ class _AnchorTargetLayer_FPN(nn.Module):
         bbox_outside_weights[labels == 1] = positive_weights
         bbox_outside_weights[labels == 0] = negative_weights
 
-        labels = _unmap(labels, total_anchors, inds_inside, batch_size, fill=-1)
-        bbox_targets = _unmap(bbox_targets, total_anchors, inds_inside, batch_size, fill=0)
-        bbox_inside_weights = _unmap(bbox_inside_weights, total_anchors, inds_inside, batch_size, fill=0)
-        bbox_outside_weights = _unmap(bbox_outside_weights, total_anchors, inds_inside, batch_size, fill=0)
+        # labels = _unmap(labels, total_anchors, inds_inside, batch_size, fill=-1)
+        # bbox_targets = _unmap(bbox_targets, total_anchors, inds_inside, batch_size, fill=0)
+        # bbox_inside_weights = _unmap(bbox_inside_weights, total_anchors, inds_inside, batch_size, fill=0)
+        # bbox_outside_weights = _unmap(bbox_outside_weights, total_anchors, inds_inside, batch_size, fill=0)
 
         outputs = []
 
